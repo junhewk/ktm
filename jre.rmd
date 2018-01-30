@@ -1,0 +1,16 @@
+---
+title: "JAVA jre installation for R"
+output: github_document
+---
+
+(현재 작업 중입니다.)
+
+## 윈도우
+
+1. java jre 다운로드 및 설치
+2. JAVA_HOME 환경변수 (environment variable) 설정
+
+## 맥 OSX, 리눅스
+
+1. java jre 다운로드 및 설치
+2. sudo R cmd javareconf

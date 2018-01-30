@@ -1,0 +1,43 @@
+---
+title: "README"
+output: github_document
+---
+
+# ktm: Korean Text Mining toolkit
+
+`ktm` 패키지는 R을 통한 NLP 작업을 통합한 분석 환경을 제공하기 위해 만들어졌습니다. 형태소 분석, 감정 점수화를 제공합니다. 또한, 흔히 발생하는 인코딩 문제를 해결하고, 더 나은 분석 환경을 제공하려는 목적으로 개발 중입니다. 기존에 활용되고 있는 NLP 패키지에 호환 가능한 자료 형태로 한글 텍스트를 변환, 그리고 `UTF-8` 인코딩 확인 기능을 제공할 예정입니다. Term-Document Matrix 제작에 흔히 사용하는 `tm` 패키지나, tidy data set 형태로 텍스트를 가공해주는 `tidytext` 패키지 등이 대표적인 예시일 겁니다.
+
+여러 NLP 패키지에 맞는 클래스 형태로 한글 텍스트 데이터를 가공하는 함수를 제공하는 것이 현재 계획입니다. 최초 업로드에는 말씀드린 기능을 구현하지 못했습니다. 테스트 환경을 확보 후, 하나씩 작업해서 추가해 나가도록 하겠습니다.
+
+이 패키지는 [rJava](https://cran.r-project.org/package=rJava)를 통해 [Seunjeon](https://bitbucket.org/eunjeon/seunjeon) 형태소 분석기를 불러오며, 자료형의 정리를 위해  [dplyr](https://cran.r-project.org/package=dplyr)과 [tibble](https://cran.r-project.org/package=tibble) 패키지를 활용합니다.
+
+이 작업을 두 프로젝트에 빚지고 있습니다. 하나는 [Seunjeon](https://bitbucket.org/eunjeon/seunjeon) (유영호, 이용운, 아파치 라이센스 2.0)이며, 다른 하나는 [KOSAC](http://word.snu.ac.kr/kosac) 감정 어휘 목록(서울대학교 언어학과 컴퓨터언어학 연구소)입니다.
+
+## 설치
+
+``` {r}
+# java jre 설치와 JAVA_HOME environment variable 설정을 먼저 진행합니다.
+# 자세한 설명은 http://github.com/junhewk/ktm/jre.rmd를 참고해주세요.
+# install.packages("rJava")
+install.packages("devtools")
+devtools::install_github("junhewk/ktm")
+```
+
+***
+
+## 활용례
+
+### 형태소 분석: `tagger` 함수
+
+### 분석소(token)화: `tokenizer` 함수
+
+### N-gram 분석소화: `ngramer` 함수
+
+### 한국어 텍스트 감정 점수화: `emotionalizer` 함수
+
+***
+
+## 제작자
+
+김준혁 (junhewk.kim@gmail.com)
+
