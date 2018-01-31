@@ -121,11 +121,11 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
       }
     }
 
-    Encoding(term) <- "UTF-8"
+    if (!is.null(term)) Encoding(term) <- "UTF-8"
     termList[[i]] <- term
     names(termList)[[i]] <- i
     if (token == "tag") {
-      Encoding(tag) <- "UTF-8"
+      if (!is.null(tag)) Encoding(tag) <- "UTF-8"
       tagList[[i]] <- tag
     }
   }

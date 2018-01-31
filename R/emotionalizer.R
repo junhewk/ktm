@@ -76,7 +76,7 @@ emotionalizer.default <- function(corpus, rate = c("proportion", "number")) {
       }
     }
 
-    Encoding(term) <- "UTF-8"
+    if (!is.null(term)) Encoding(term) <- "UTF-8"
     termList[[i]] <- term
     names(termList)[[i]] <- i
   }

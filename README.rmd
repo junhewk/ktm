@@ -17,7 +17,7 @@ output: github_document
 
 ``` {r}
 # java jre 설치와 JAVA_HOME environment variable 설정을 먼저 진행합니다.
-# 자세한 설명은 http://github.com/junhewk/ktm/jre.rmd를 참고해주세요.
+# 자세한 설명은 https://github.com/junhewk/ktm/blob/master/jre.rmd를 참고해주세요.
 # install.packages("rJava")
 install.packages("devtools")
 devtools::install_github("junhewk/ktm")
@@ -29,11 +29,40 @@ devtools::install_github("junhewk/ktm")
 
 ### 형태소 분석: `tagger` 함수
 
+``` {r tagger}
+library(ktm)
+
+melonLyrics <- "https://github.com/junhewk/melonchartlyrics/raw/master/melon_ranking_lyrics_1964-2016.csv"
+lyricsData <- read.csv(melonLyrics, stringsAsFactors = FALSE)
+
+tagger(lyricsData$lyric[1:6]) # 형태소/태그 형태로 출력
+tagger(lyricsData$lyric[1:6], annotate = FALSE) # 형태소만 출력
+tagger(lyricsData$lyric[1:6], deinflect = FALSE) # 굴절어 원형 출력
+tagger(lyricsData$lyric[1:6], strip_number = TRUE, strip_punct = TRUE) # 숫자, 기호 제거
+```
+
 ### 분석소(token)화: `tokenizer` 함수
 
-### N-gram 분석소화: `ngramer` 함수
+``` {r tokenizer}
+tokenizer(lyricsData$lyric[1:6]) # tibble 형태로 형태소/태그 출력
+tokenizer(lyricsData$lyric[1:6], annotate = FALSE) # tibble 형태, 형태소만 출력
+tokenizer(lyricsData$lyric[1:6], token = "tag") # tibble 형태, 형태소와 태그를 별도 칼럼으로
+tokenizer(lyricsData$lyric[1:6], token = "ngram", n = 4, n_min = 2, ngram_sep = " ") # tibble 형태, 형태소 bigram부터 quadgram까지 출력
+```
+
+###N-gram 분석소화: `ngramer` 함수
+
+``` {r ngramer}
+ngramer(tagger(lyricsData$lyric[1:6])) # `tagger`로 만든 형태소/태그 리스트를 ngram으로
+ngramer(tagger(lyricsData$lyric[1:6]), n = 3, n_min = 2, ngram_sep = "+")
+```
 
 ### 한국어 텍스트 감정 점수화: `emotionalizer` 함수
+
+``` {r emotionalizer}
+emotionalizer(lyricsData$lyric[1:6]) # 각 텍스트의 대표 감정과 비율 tibble 형태로 출력
+emotionalizer(tokenizer(lyricsData$lyrics[1:6], token = "ngram", n = 3, n_min = 2, ngram_sep = ";")) # bigram과 trigram의 감정값만 구하고 싶은 경우, 결과값은 `tokenizer` tibble에 KOSAC polarity dataset이 join된 형태로 제공됨
+```
 
 ***
 

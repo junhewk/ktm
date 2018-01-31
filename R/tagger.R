@@ -71,7 +71,7 @@ tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE, strip_
         }
       }
     }
-    Encoding(term) <- "UTF-8"
+    if (!is.null(term)) Encoding(term) <- "UTF-8"
     ret[[i]] <- term
   }
 
