@@ -16,7 +16,7 @@ check_dictword <- function(x) {
     stop("Input must be a character vector of any length")
 }
 
-#' @importFrom stringi stri_enc_detect
+#' @import stringi
 enc_preprocess <- function(x) {
   if (!requireNamespace("stringi", quietly = TRUE)) {
     stop("stringi package is needed")
@@ -26,7 +26,7 @@ enc_preprocess <- function(x) {
 
   if (!Encoding(x) == "UTF-8" && all((encGuess[[1]]$Encoding[1] == "EUC-KR"), encGuess[[1]]$Confidence[1] >= 0.9)) {
     warning("ktm suppose the character vector's encoding is EUC-KR. Input will be coerced the encoding to UTF-8.")
-    x <- iconv(x, from = "EUC-KR", to = "UTF-8")
+    x <- stringi::stri_conv(x, from = "EUC-KR", to = "UTF-8")
     x
   } else {
     x
