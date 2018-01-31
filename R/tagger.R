@@ -28,7 +28,9 @@
 #' @import rJava
 #' @export
 tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE, strip_punct = FALSE, strip_number = FALSE) {
-  # check_input(corpus)
+  check_input(corpus)
+
+  corpus <- enc_preprocess(corpus)
 
   if (strip_punct == TRUE) {
     corpus <- gsub("[[:punct:]]", " ", corpus)
@@ -37,16 +39,20 @@ tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE, strip_
     corpus <- gsub("[0-9]", " ", corpus)
   }
 
-  ret <- list()
+  ret <- vector("list", length(corpus))
 
   analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
   node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
 
   for (i in seq_along(corpus)) {
-    # text[i] <- iconv(text[i], to = "UTF-8") # is it needed to declare encoding before the analysis?
 
-    result <- rJava::.jcast(analyzer$parseJava(corpus[[i]]), node)
-    term <- c()
+    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
+                       error = function(e) {
+                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
+                         NULL
+                       })
+
+    term <- character()
 
     for (ns in as.list(result)) {
       if (deinflect == TRUE) {

@@ -37,29 +37,31 @@ ngramer <- function(token, n = 3L, n_min = n, ngram_sep = ";") {
          "n and greater than 1.")
   }
 
-  ret <- list()
+  ret <- vector("list", length(token))
 
   for (i in seq_along(token)) {
-    ngram_text <- c()
+    term <- character()
 
-    for (j in seq(n_min, n, 1)) {
-      ngram_text <- c(ngram_text, ngramize(token[[i]], n = j, ngram_sep = ngram_sep, len = (length(token[[i]]) - j + 1)))
+    if (length(token[[i]]) > n_min) {
+      for (j in seq(n_min, n, 1)) {
+        term <- c(term, ngramize(token[[i]], n = j, ngram_sep = ngram_sep,
+                                 len = (length(token[[i]]) - j + 1)))
+      }
     }
 
-    ret[[i]] <- ngram_text
+    ret[[i]] <- term
   }
 
+  names(ret) <- names(token)
   ret
 }
 
 # internal function for n-gram tokenizer
 ngramize <- function(token, n, ngram_sep, len) {
-  ret <- c()
-  index <- 1
+  ret <- character(len)
 
-  for (i in seq_along(len)) {
-    ret[index] <- paste(token[i:(i + n - 1)], collapse = ngram_sep)
-    index <- index + 1
+  for (i in seq_len(len)) {
+    ret[i] <- paste(token[i:(i + n - 1)], collapse = ngram_sep)
   }
 
   ret

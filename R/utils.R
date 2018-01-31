@@ -15,3 +15,13 @@ check_dictword <- function(x) {
   if (!is.character(x))
     stop("Input must be a character vector of any length")
 }
+
+enc_preprocess <- function(x) {
+  if (!Encoding(x) == "UTF-8") {
+    warning("ktm suppose the character vector's encoding is EUC-KR. Input will be coerced the encoding to UTF-8.")
+    x <- iconv(x, from = "EUC-KR", to = "UTF-8")
+    x
+  } else {
+    x
+  }
+}

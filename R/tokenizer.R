@@ -45,7 +45,9 @@
 #' @export
 tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE, sep = "/", deinflect = FALSE,
                   strip_punct = TRUE, strip_number = TRUE, n = 3, n_min = n, ngram_sep = ";") {
-  #check_input(corpus)
+  check_input(corpus)
+
+  corpus <- enc_preprocess(corpus)
 
   token <- match.arg(token)
 
@@ -58,14 +60,18 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
   node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
   inflect <- rJava::J("org.bitbucket.eunjeon.seunjeon.MorphemeType")$INFLECT()
 
-  termList <- list()
-  tagList <- list()
+  termList <- tagList <- vector("list", length(corpus))
 
   for (i in seq_along(corpus)) {
-    # text[i] <- iconv(text[i], to = "UTF-8") # double check for input encoding
-    result <- rJava::.jcast(analyzer$parseJava(corpus[[i]]), node)
-    term <- c()
-    tag <- c()
+
+    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
+                       error = function(e) {
+                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
+                         NULL
+                       })
+
+    term <- character()
+    tag <- character()
 
     for (ns in as.list(result)) {
       if (deinflect == TRUE) {
@@ -117,6 +123,7 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
 
     Encoding(term) <- "UTF-8"
     termList[[i]] <- term
+    names(termList)[[i]] <- i
     if (token == "tag") {
       Encoding(tag) <- "UTF-8"
       tagList[[i]] <- tag
@@ -127,7 +134,8 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
     termList <- ngramer(termList, n, n_min, ngram_sep)
   }
 
-  ret <- tibble::as_tibble(stats::setNames(utils::stack(stats::setNames(termList, seq_along(termList))), c(token, "text_id")))
+  ret <- tibble::as_tibble(stats::setNames(utils::stack(termList), c(token, "text_id")))
+  ret$text_id <- as.integer(as.character(ret$text_id))
 
   if (token == "tag") {
     ret$tags <- unlist(tagList)

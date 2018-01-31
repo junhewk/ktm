@@ -41,4 +41,7 @@ n-grams are extracted in all combination, but punctuations are removed.
 
 The sentiment lexicon can be used solely for academic and research purposes.
 }
+\references{
+Munhyong Kim et al(2013). KOSAC: Korean Sentiment Analysis Corpus
+}
 \keyword{datasets}

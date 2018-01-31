@@ -4,10 +4,15 @@
 \alias{emotionalizer}
 \title{Calculating sentiment scores of the texts based on the `KOSAC` polarity dataset}
 \usage{
-emotionalizer(corpus)
+emotionalizer(corpus, rate = c("proportion", "number"))
 }
 \arguments{
-\item{corpus}{a character vector of any length or a list of characters for sentiment analysis}
+\item{corpus}{a character vector of any length or a list of characters for sentiment analysis,
+or a tibble made from `tokenizer(tag = "ngram")`}
+
+\item{rate}{in "proportion", the proportion of the largest sentiment will be returned in the `prop` column,
+in "number", the number of the largest sentiment will be returned in the `n` column. this is
+meaningful when `corpus` is a character vector or a list}
 }
 \value{
 a tibble with input texts, text ids, and sentiments
@@ -31,6 +36,6 @@ emotionalizer(textKor)
 
 # or
 textTibble <- tokenizer(textKor, token = "ngram", n = 2, n_min = 1)
-textTibble <- emotionalizer(textTibble)
+emotionalizer(textTibble)
 }
 }

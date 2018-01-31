@@ -1,3 +1,4 @@
 .*
 !/.gitignore
 ktm_test.R
+.Rproj.user

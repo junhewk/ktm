@@ -9,7 +9,11 @@
 #' Text's sentiment is determined based on the `KOSAC` classification of positive (POS),
 #' negative (NEG), neutral (NEUT), and complex (COMP).
 #'
-#' @param corpus a character vector of any length or a list of characters for sentiment analysis
+#' @param corpus a character vector of any length or a list of characters for sentiment analysis,
+#' or a tibble made from `tokenizer(tag = "ngram")`
+#' @param rate in "proportion", the proportion of the largest sentiment will be returned in the `prop` column,
+#' in "number", the number of the largest sentiment will be returned in the `n` column. this is
+#' meaningful when `corpus` is a character vector or a list
 #' @return a tibble with input texts, text ids, and sentiments
 #'
 #' See examples in \href{https://github.com/junhewk/ktm}{Github}.
@@ -21,20 +25,24 @@
 #'
 #' # or
 #' textTibble <- tokenizer(textKor, token = "ngram", n = 2, n_min = 1)
-#' textTibble <- emotionalizer(textTibble)
+#' emotionalizer(textTibble)
 #' }
 #' @import dplyr
 #' @import tibble
-#' @importFrom stats setNames
+#' @importFrom stats setNames na.omit
 #' @importFrom utils stack
 #' @export
-emotionalizer <- function(corpus) {
+emotionalizer <- function(corpus, rate = c("proportion", "number")) {
   UseMethod("emotionalizer")
 }
 
 #' @export
-emotionalizer.default <- function(corpus) {
+emotionalizer.default <- function(corpus, rate = c("proportion", "number")) {
   check_input(corpus)
+
+  rate <- match.arg(rate)
+
+  corpus <- enc_preprocess(corpus)
 
   corpus <- gsub("[[:punct:]]", " ", corpus)
   corpus <- gsub("[0-9]", "", corpus)
@@ -44,46 +52,58 @@ emotionalizer.default <- function(corpus) {
   node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
   inflect <- rJava::J("org.bitbucket.eunjeon.seunjeon.MorphemeType")$INFLECT()
 
-  termList <- list()
+  termList <- vector("list", length(corpus))
   sep <- "/"
 
   for (i in seq_along(corpus)) {
-    # text[i] <- iconv(text[i], to = "UTF-8") # double check
-    result <- rJava::.jcast(analyzer$parseJava(corpus[[i]]), node)
-    term <- c()
 
-    for (ns in as.list(result)) {
-      if (ns$morpheme()$mType() == inflect) {
-        for (tm in strsplit(ns$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-          term <- c(term, substr(tm, 1, (nchar(tm) - 2)))
+    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
+                       error = function(e) {
+                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
+                         NULL
+                       })
+    term <- character()
+
+    if (!is.null(result)) {
+      for (ns in as.list(result)) {
+        if (ns$morpheme()$mType() == inflect) {
+          for (tm in strsplit(ns$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
+            term <- c(term, substr(tm, 1, (nchar(tm) - 2)))
+          }
+        } else {
+          term <- c(term, paste0(ns$morpheme()$surface(), sep, ns$morpheme()$feature()$head()))
         }
-      } else {
-        term <- c(term, paste0(ns$morpheme()$surface(), sep, ns$morpheme()$feature()$head()))
       }
     }
+
     Encoding(term) <- "UTF-8"
     termList[[i]] <- term
+    names(termList)[[i]] <- i
   }
+
+  termList <- termList[!sapply(termList, is.null)]
 
   ngramText <- ngramer(termList, n = 3, n_min = 1, ngram_sep = ";")
 
-  ngramDf <- tibble::as_tibble(stats::setNames(utils::stack(stats::setNames(ngramText, seq_along(ngramText))), c("ngram", "text_id")))
+  ngramDf <- tibble::as_tibble(stats::setNames(utils::stack(ngramText), c("ngram", "text_id")))
+  ngramDf$text_id <- as.integer(as.character(ngramDf$text_id))
   ngramDf <- dplyr::left_join(ngramDf, dplyr::as_tibble(polarity))
 
   ngramDf <- dplyr::group_by(ngramDf, text_id)
-  ngramDf <- dplyr::summarize(ngramDf,
-                              POS = sum(POS, na.rm = TRUE),
-                              NEG = sum(NEG, na.rm = TRUE),
-                              NEUT = sum(NEUT, na.rm = TRUE),
-                              COMP = sum(COMP, na.rm = TRUE))
+  ngramDf <- stats::na.omit(ngramDf)
+  ngramDf <- dplyr::count(ngramDf, max.value)
+  if (rate == "proportion") ngramDf <- dplyr::mutate(ngramDf, prop = prop.table(n))
+  ngramDf <- dplyr::filter(ngramDf, n == max(n))
+  ngramDf <- ngramDf[!duplicated(ngramDf$text_id), ]
+  if (rate == "proportion") ngramDf <- dplyr::select(ngramDf, -n)
 
-  ret <- dplyr::bind_cols(text = corpus, ngramDf)
+  ret <- dplyr::left_join(tibble::tibble(text = corpus, text_id = seq_along(corpus)), ngramDf)
 
   ret
 }
 
 #' @export
-emotionalizer.tbl_df <- function(corpus) {
+emotionalizer.tbl_df <- function(corpus, rate = c("proportion", "number")) {
   first_col_name <- colnames(corpus)[1]
 
   if (!(first_col_name %in% c("word", "ngram"))) {
@@ -93,7 +113,8 @@ emotionalizer.tbl_df <- function(corpus) {
   colnames(corpus)[1] <- "ngram"
 
   # merge the polarity data frame
-  ret <- dplyr::left_join(corpus, dplyr::select(dplyr::as_tibble(polarity), max.value, max.prop))
+  ret <- dplyr::left_join(corpus, dplyr::select(dplyr::as_tibble(polarity), ngram, max.value, max.prop))
+
   colnames(ret)[1] <- first_col_name
 
   # return the data frame as defined
