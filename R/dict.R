@@ -21,7 +21,7 @@ set_userdict <- function(dictWord) {
   check_dictword(dictWord)
 
   seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
-  rJava::.jcall(seinterface, "V", "setDict", dictWord)
+  rJava::.jcall(seinterface, "V", "setDict", .jarray(dictWord))
 }
 
 #' Resetting user dictionary

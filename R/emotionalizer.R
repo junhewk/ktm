@@ -50,27 +50,20 @@ emotionalizer.default <- function(corpus, rate = c("proportion", "number")) {
 
   seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
 
-  termList <- vector("list", length(corpus))
-  sep <- "/"
+  termList <- lapply(corpus, function(x) {
+    result <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", x, "/"),
+                       error = function(e) {
+                         warning(sprintf("'%s' can't be processed.\n", x))
+                         character(0)
+                       })
+    Encoding(result) <- "UTF-8"
+    result})
 
-  for (i in seq_along(corpus)) {
-
-    term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
-                     error = function(e) {
-                       warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                       character(0)
-                     })
-
-    if (!is.null(term)) Encoding(term) <- "UTF-8"
-    termList[[i]] <- term
-    names(termList)[[i]] <- i
-  }
-
-  termList <- termList[!sapply(termList, is.null)]
+  names(termList) <- seq_along(termList)
 
   ngramText <- ngramer(termList, n = 3, n_min = 1, ngram_sep = ";")
 
-  ngramDf <- tibble::as_tibble(stats::setNames(utils::stack(ngramText), c("ngram", "text_id")))
+  ngramDf <- stats::setNames(utils::stack(ngramText), c("ngram", "text_id"))
   ngramDf$text_id <- as.integer(as.character(ngramDf$text_id))
   ngramDf <- dplyr::left_join(ngramDf, dplyr::as_tibble(polarity))
 

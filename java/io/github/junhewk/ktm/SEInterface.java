@@ -54,7 +54,7 @@ public class SEInterface {
         for (LNode node: Analyzer.parseJava(sentence)) {
             Morpheme morpheme = node.morpheme();
             ret.add(morpheme.surface());
-            tags.add(morpheme.surface());
+            tags.add(morpheme.feature().head());
         }
 
         ret.addAll(tags);
@@ -109,16 +109,14 @@ public class SEInterface {
 
     public String[] tokenMorpheme(String sentence) {
 
-        List<String> list = null;
-
-        list = new ArrayList<String>();
+        List<String> ret = new ArrayList<String>();
 
         for (LNode node: Analyzer.parseJava(sentence)) {
             Morpheme morpheme = node.morpheme();
-            list.add(morpheme.surface());
+            ret.add(morpheme.surface());
         }
 
-        return list.toArray(new String[0]);
+        return ret.toArray(new String[0]);
     }
 
     public String[] tokenNoun(String sentence) {
@@ -175,7 +173,7 @@ public class SEInterface {
             for (LNode node2: node.deInflectJava()) {
                 Morpheme morpheme = node2.morpheme();
                 ret.add(morpheme.surface());
-                tags.add(morpheme.surface());
+                tags.add(morpheme.feature().head());
             }
         }
 

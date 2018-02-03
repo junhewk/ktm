@@ -42,40 +42,37 @@ tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE,
 
   seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
 
-  ret <- vector("list", length(corpus))
+  # ret <- vector("list", length(corpus))
 
-  for (i in seq_along(corpus)) {
+  # for (i in seq_along(corpus)) {
+  if (annotate == TRUE) {
     if (deinflect == TRUE) {
-      if (annotate == TRUE) {
-        result <- tryCatch(rJava::.jcall(seinterface, "[S", "taggerDeinflect", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      } else {
-        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenDeinflect", corpus[[i]]),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-        }
+      seMethod <-  "taggerDeinflect"
     } else {
-      if (annotate == TRUE) {
-        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tagger", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      } else {
-        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenMorpheme", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      }
+      seMethod <-  "tagger"
     }
-    if (!is.null(result)) Encoding(result) <- "UTF-8"
-    ret[[i]] <- result
+    ret <- lapply(corpus, function(x) {
+      result <- tryCatch(rJava::.jcall(seinterface, "[S", seMethod, x, sep),
+                         error = function(e) {
+                           warning(sprintf("'%s' can't be processed.\n", x))
+                           character(0)
+                         })
+      Encoding(result) <- "UTF-8"
+      result})
+  } else {
+    if (annotate == TRUE) {
+      seMethod <-  "tokenDeinflect"
+    } else {
+      seMethod <-  "tokenMorpheme"
+    }
+    ret <- lapply(corpus, function(x) {
+      result <- tryCatch(rJava::.jcall(seinterface, "[S", seMethod, x),
+                         error = function(e) {
+                           warning(sprintf("'%s' can't be processed.\n", x))
+                           character(0)
+                         })
+      Encoding(result) <- "UTF-8"
+      result})
   }
   ret
 }

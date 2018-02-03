@@ -58,61 +58,51 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
 
   seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
 
-  termList <- tagList <- vector("list", length(corpus))
-
-  for (i in seq_along(corpus)) {
+  if (token == "tag") {
     if (deinflect == TRUE) {
-      if (token == "tag") {
-        result <- tryCatch(rJava::.jcall(seinterface, "[S", "separatedTaggerDeinflect", corpus[[i]]),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-        term <- result[1:(length(result) / 2)]
-        tag <- result[(length(result) / 2):length(result)]
-      } else if (annotate == TRUE) {
-        term <- tryCatch(rJava::.jcall(seinterface, "[S", "taggerDeinflect", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      } else {
-        term <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenDeinflect", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      }
+      seMethod <- "separatedTaggerDeinflect"
     } else {
-      if (token == "tag") {
-        term <- tryCatch(rJava::.jcall(seinterface, "[S", "separatedTagger", corpus[[i]]),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-        term <- result[1:(length(result) / 2)]
-        tag <- result[(length(result) / 2):length(result)]
-      } else if (annotate == TRUE) {
-        term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      } else {
-        term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
-                           error = function(e) {
-                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
-                             character(0)
-                           })
-      }
+      seMethod <- "separatedTagger"
     }
+    termList <- lapply(corpus, function(x) {
+      result <- tryCatch(rJava::.jcall(seinterface, "[S", seMethod, x),
+                         error = function(e) {
+                           warning(sprintf("'%s' can't be processed.\n", x))
+                           character(0)
+                         })
+      Encoding(result) <- "UTF-8"
+      list(word = result[1:(length(result) / 2)],
+           tag = result[((length(result) / 2) + 1):length(result)])})
+  } else {
+    if (annotate == TRUE) {
+      if (deinflect == TRUE) {
+        seMethod <- "taggerDeinflect"
+      } else {
+        seMethod <- "unpackedTaggerSep"
+      }
+      termList <- lapply(corpus, function(x) {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", seMethod, x, sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", x))
+                             character(0)
+                           })
+        Encoding(result) <- "UTF-8"
+        result})
 
-    if (!is.null(term)) Encoding(term) <- "UTF-8"
-    termList[[i]] <- term
-    names(termList)[[i]] <- i
-    if (token == "tag") {
-      if (!is.null(tag)) Encoding(tag) <- "UTF-8"
-      tagList[[i]] <- tag
+    } else {
+      if (deinflect == TRUE) {
+        seMethod <- "tokenDeinflect"
+      } else {
+        seMethod <- "unpackedTagger"
+      }
+      termList <- lapply(corpus, function(x) {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", seMethod, x),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", x))
+                             character(0)
+                           })
+        Encoding(result) <- "UTF-8"
+        result})
     }
   }
 
@@ -120,16 +110,14 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
     termList <- ngramer(termList, n, n_min, ngram_sep)
   }
 
-  ret <- tibble::as_tibble(stats::setNames(utils::stack(termList), c(token, "text_id")))
-  ret$text_id <- as.integer(as.character(ret$text_id))
-
   if (token == "tag") {
-    ret$tags <- unlist(tagList)
-    ret <- ret[c(token, "tags", "text_id")]
-    colnames(ret) <- c("word", "tag", "text_id")
+    ret <- dplyr::bind_rows(termList, .id = "text_id")
+    ret <- ret[c("word", "tag", "text_id")]
     ret
   } else {
-    ret <- ret[c(token, "text_id")]
-    ret
+    names(termList) <- seq_along(termList)
+    ret <- stats::setNames(utils::stack(termList), c("word", "text_id"))
+    ret$text_id <- as.integer(as.character(ret$text_id))
+    tibble::as.tibble(ret)
   }
 }
