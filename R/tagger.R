@@ -27,7 +27,8 @@
 #'
 #' @import rJava
 #' @export
-tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE, strip_punct = FALSE, strip_number = FALSE) {
+tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE,
+                   strip_punct = FALSE, strip_number = FALSE) {
   check_input(corpus)
 
   corpus <- enc_preprocess(corpus)
@@ -39,42 +40,43 @@ tagger <- function(corpus, sep = "/", annotate = TRUE, deinflect = FALSE, strip_
     corpus <- gsub("[0-9]", " ", corpus)
   }
 
+  seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
+
   ret <- vector("list", length(corpus))
 
-  analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
-  node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
-
   for (i in seq_along(corpus)) {
-
-    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
-                       error = function(e) {
-                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
-                         NULL
-                       })
-
-    term <- character()
-
-    for (ns in as.list(result)) {
-      if (deinflect == TRUE) {
-        for (n in as.list(ns$deInflectJava())) {
-          if (annotate == FALSE) {
-            term <- c(term, n$morpheme()$surface())
-          } else {
-            term <- c(term, paste0(n$morpheme()$surface(), sep, n$morpheme()$feature()$head()))
-          }
-        }
+    if (deinflect == TRUE) {
+      if (annotate == TRUE) {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", "taggerDeinflect", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
       } else {
-        if (annotate == FALSE) {
-          term <- c(term, ns$morpheme()$surface())
-        } else {
-          term <- c(term, paste0(ns$morpheme()$surface(), sep, ns$morpheme()$feature()$head()))
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenDeinflect", corpus[[i]]),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
         }
+    } else {
+      if (annotate == TRUE) {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tagger", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
+      } else {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenMorpheme", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
       }
     }
-    if (!is.null(term)) Encoding(term) <- "UTF-8"
-    ret[[i]] <- term
+    if (!is.null(result)) Encoding(result) <- "UTF-8"
+    ret[[i]] <- result
   }
-
   ret
 }
 

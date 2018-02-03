@@ -56,68 +56,54 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
   if (strip_number == TRUE) corpus <- gsub("[0-9]", "", corpus)
   # if (strip_eng == TRUE) text <- gsub("[A-Za-z]", "", text)
 
-  analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
-  node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
-  inflect <- rJava::J("org.bitbucket.eunjeon.seunjeon.MorphemeType")$INFLECT()
+  seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
 
   termList <- tagList <- vector("list", length(corpus))
 
   for (i in seq_along(corpus)) {
-
-    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
-                       error = function(e) {
-                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
-                         NULL
-                       })
-
-    term <- character()
-    tag <- character()
-
-    for (ns in as.list(result)) {
-      if (deinflect == TRUE) {
-        for (n in as.list(ns$deInflectJava())) {
-          if (token == "tag") {
-            term <- c(term, n$morpheme()$surface())
-            tag <- c(tag, n$morpheme()$feature()$head())
-          } else if (annotate == TRUE) {
-            if (n$morpheme()$mType() == inflect) {
-              for (tm in strsplit(n$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-                term <- c(term, substr(tm, 1, (nchar(tm) - 2)))
-              }
-            } else {
-              term <- c(term, paste0(n$morpheme()$surface(), sep, n$morpheme()$feature()$head()))
-            }
-          } else {
-            if (n$morpheme()$mType() == inflect) {
-              for (tm in strsplit(n$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-                term <- c(term, strsplit(tm, "/")[[1]][1])
-              }
-            } else {
-              term <- c(term, n$morpheme()$surface())
-            }
-          }
-        }
+    if (deinflect == TRUE) {
+      if (token == "tag") {
+        result <- tryCatch(rJava::.jcall(seinterface, "[S", "separatedTaggerDeinflect", corpus[[i]]),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
+        term <- result[1:(length(result) / 2)]
+        tag <- result[(length(result) / 2):length(result)]
+      } else if (annotate == TRUE) {
+        term <- tryCatch(rJava::.jcall(seinterface, "[S", "taggerDeinflect", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
       } else {
-        if (token == "tag") {
-          term <- c(term, ns$morpheme()$surface())
-          tag <- c(tag, ns$morpheme()$feature()$head())
-        } else if (annotate == TRUE) {
-          if (ns$morpheme()$mType() == inflect) {
-            for (tm in strsplit(ns$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-              term <- c(term, substr(tm, 1, (nchar(tm) - 2)))
-            }
-          } else {
-            term <- c(term, paste0(ns$morpheme()$surface(), sep, ns$morpheme()$feature()$head()))
-          }
-        } else {
-          if (ns$morpheme()$mType() == inflect) {
-            for (tm in strsplit(ns$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-              term <- c(term, strsplit(tm, "/")[[1]][1])
-            }
-          } else {
-            term <- c(term, ns$morpheme()$surface())
-          }
-        }
+        term <- tryCatch(rJava::.jcall(seinterface, "[S", "tokenDeinflect", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
+      }
+    } else {
+      if (token == "tag") {
+        term <- tryCatch(rJava::.jcall(seinterface, "[S", "separatedTagger", corpus[[i]]),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
+        term <- result[1:(length(result) / 2)]
+        tag <- result[(length(result) / 2):length(result)]
+      } else if (annotate == TRUE) {
+        term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
+      } else {
+        term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
+                           error = function(e) {
+                             warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                             character(0)
+                           })
       }
     }
 

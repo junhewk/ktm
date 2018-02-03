@@ -1,7 +1,7 @@
 Package: ktm
 Type: Package
 Title: Korean Text Mining Toolkit using `Seunjeon`, `dplyr`, and Other Tools
-Version: 0.0.1
+Version: 0.0.2
 Author: Junhewk Kim
 Maintainer: Junhewk Kim <junhewk.kim@gmail.com>
 URL: http://github.com/junhewk/ktm
@@ -12,7 +12,8 @@ Imports:
     rJava (>= 0.9-8),
     dplyr (>= 0.7.0),
     tibble (>= 1.3.0),
-    utils (>= 3.3.1)
+    utils (>= 3.3.1),
+    stringi (>= 1.1.6)
 License: GPL
 Encoding: UTF-8
 LazyData: true

@@ -20,11 +20,8 @@
 set_userdict <- function(dictWord) {
   check_dictword(dictWord)
 
-  analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
-  arrays <- rJava::J("java.util.Arrays")
-
-  userDict <- arrays$asList(rJava::.jarray(dictWord))$iterator()
-  analyzer$setUserDict(userDict)
+  seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
+  rJava::.jcall(seinterface, "V", "setDict", dictWord)
 }
 
 #' Resetting user dictionary
@@ -39,7 +36,6 @@ set_userdict <- function(dictWord) {
 #' @import rJava
 #' @export
 reset_userdict <- function() {
-  analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
-
-  analyzer$resetUserDict
+  seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
+  rJava::.jcall(seinterface, "V", "resetDict")
 }

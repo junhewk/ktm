@@ -48,33 +48,18 @@ emotionalizer.default <- function(corpus, rate = c("proportion", "number")) {
   corpus <- gsub("[0-9]", "", corpus)
   corpus <- gsub("[A-Za-z]", "", corpus)
 
-  analyzer <- rJava::J("org.bitbucket.eunjeon.seunjeon.Analyzer")
-  node <- rJava::J("org.bitbucket.eunjeon.seunjeon.LNode")
-  inflect <- rJava::J("org.bitbucket.eunjeon.seunjeon.MorphemeType")$INFLECT()
+  seinterface <- rJava::.jnew("io/github/junhewk/ktm/SEInterface")
 
   termList <- vector("list", length(corpus))
   sep <- "/"
 
   for (i in seq_along(corpus)) {
 
-    result <- tryCatch(rJava::.jcast(analyzer$parseJava(corpus[[i]]), node),
-                       error = function(e) {
-                         warning(sprintf("'%s' can't be processed.", corpus[[i]]))
-                         NULL
-                       })
-    term <- character()
-
-    if (!is.null(result)) {
-      for (ns in as.list(result)) {
-        if (ns$morpheme()$mType() == inflect) {
-          for (tm in strsplit(ns$morpheme()$feature()$array()[8], "+", fixed = TRUE)) {
-            term <- c(term, substr(tm, 1, (nchar(tm) - 2)))
-          }
-        } else {
-          term <- c(term, paste0(ns$morpheme()$surface(), sep, ns$morpheme()$feature()$head()))
-        }
-      }
-    }
+    term <- tryCatch(rJava::.jcall(seinterface, "[S", "unpackedTaggerSep", corpus[[i]], sep),
+                     error = function(e) {
+                       warning(sprintf("'%s' can't be processed.\n", corpus[[i]]))
+                       character(0)
+                     })
 
     if (!is.null(term)) Encoding(term) <- "UTF-8"
     termList[[i]] <- term
