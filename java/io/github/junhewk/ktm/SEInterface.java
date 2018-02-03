@@ -46,6 +46,22 @@ public class SEInterface {
 
     }
 
+    public String[] separatedTagger(String sentence) {
+
+        List<String> ret = new ArrayList<String>();
+        List<String> tags = new ArrayList<String>();
+
+        for (LNode node: Analyzer.parseJava(sentence)) {
+            Morpheme morpheme = node.morpheme();
+            ret.add(morpheme.surface());
+            tags.add(morpheme.surface());
+        }
+
+        ret.addAll(tags);
+        return ret.toArray(new String[0]);
+
+    }
+
     public String[] unpackedTagger(String sentence) {
 
         List<String> ret = new ArrayList<String>();
@@ -103,7 +119,6 @@ public class SEInterface {
         }
 
         return list.toArray(new String[0]);
-
     }
 
     public String[] tokenNoun(String sentence) {
@@ -116,9 +131,7 @@ public class SEInterface {
                 ret.add(morpheme.surface());
             }
         }
-
         return ret.toArray(new String[0]);
-
     }
 
     public String[] taggerDeinflect(String sentence, String separator) {
@@ -134,6 +147,40 @@ public class SEInterface {
             }
         }
         return list.toArray(new String[0]);
+    }
+
+
+    public String[] tokenDeinflect(String sentence) {
+
+        List<String> list = null;
+
+        list = new ArrayList<String>();
+
+        for (LNode node : Analyzer.parseJava(sentence)) {
+            for (LNode node2: node.deInflectJava()) {
+                Morpheme morpheme = node2.morpheme();
+                list.add(morpheme.surface());
+            }
+        }
+        return list.toArray(new String[0]);
+
+    }
+
+    public String[] separatedTaggerDeinflect(String sentence) {
+
+        List<String> ret = new ArrayList<String>();
+        List<String> tags = new ArrayList<String>();
+
+        for (LNode node: Analyzer.parseJava(sentence)) {
+            for (LNode node2: node.deInflectJava()) {
+                Morpheme morpheme = node2.morpheme();
+                ret.add(morpheme.surface());
+                tags.add(morpheme.surface());
+            }
+        }
+
+        ret.addAll(tags);
+        return ret.toArray(new String[0]);
 
     }
 
