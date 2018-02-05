@@ -40,8 +40,6 @@
 #' @import rJava
 #' @import dplyr
 #' @import tibble
-#' @importFrom stats setNames
-#' @importFrom utils stack
 #' @export
 tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE, sep = "/", deinflect = FALSE,
                   strip_punct = TRUE, strip_number = TRUE, n = 3, n_min = n, ngram_sep = ";") {
@@ -115,9 +113,14 @@ tokenizer <- function(corpus, token = c("word", "ngram", "tag"), annotate = TRUE
     ret <- ret[c("word", "tag", "text_id")]
     ret
   } else {
-    names(termList) <- seq_along(termList)
-    ret <- stats::setNames(utils::stack(termList), c("word", "text_id"))
-    ret$text_id <- as.integer(as.character(ret$text_id))
-    tibble::as.tibble(ret)
+    if (token == "ngram") {
+      tibble(ngram = unlist(termList), text_id = rep(seq_along(termList), lengths(termList)))
+    } else {
+      tibble(word = unlist(termList), text_id = rep(seq_along(termList), lengths(termList)))
+    }
+    #names(termList) <- seq_along(termList)
+    #ret <- stats::setNames(utils::stack(termList), c("word", "text_id"))
+    #ret$text_id <- as.integer(as.character(ret$text_id))
+    #tibble::as.tibble(ret)
   }
 }

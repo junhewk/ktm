@@ -29,8 +29,7 @@
 #' }
 #' @import dplyr
 #' @import tibble
-#' @importFrom stats setNames na.omit
-#' @importFrom utils stack
+#' @importFrom stats na.omit
 #' @export
 emotionalizer <- function(corpus, rate = c("proportion", "number")) {
   UseMethod("emotionalizer")
@@ -61,10 +60,8 @@ emotionalizer.default <- function(corpus, rate = c("proportion", "number")) {
 
   names(termList) <- seq_along(termList)
 
-  ngramText <- ngramer(termList, n = 3, n_min = 1, ngram_sep = ";")
-
-  ngramDf <- stats::setNames(utils::stack(ngramText), c("ngram", "text_id"))
-  ngramDf$text_id <- as.integer(as.character(ngramDf$text_id))
+  termList <- ngramer(termList, n = 3, n_min = 1, ngram_sep = ";")
+  ngramDf <- tibble(ngram = unlist(termList), text_id = rep(seq_along(termList), lengths(termList)))
   ngramDf <- dplyr::left_join(ngramDf, dplyr::as_tibble(polarity))
 
   ngramDf <- dplyr::group_by(ngramDf, text_id)
