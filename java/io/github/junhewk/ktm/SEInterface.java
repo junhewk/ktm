@@ -73,10 +73,11 @@ public class SEInterface {
                 List<String> features = JavaConversions.seqAsJavaList(morpheme.feature());
                 String[] combined = features.get(7).split("\\+");
                 for (String elements: combined) {
-                    ret.add(elements.replace(residue, ""));
+                	String tagged = elements.replace(residue, "");
+                    ret.add(tagged.split("/")[0]);
                 }
             } else {
-                ret.add(morpheme.surface() + "/" + morpheme.feature().head());
+                ret.add(morpheme.surface());
             }
         }
 
