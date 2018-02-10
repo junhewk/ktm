@@ -14,6 +14,8 @@ Korean version of README is on the [github](https://github.com/junhewk/ktm/blob/
 # java jre should be installed properly and JAVA_HOME environment variable setting is needed
 # install.packages("rJava")
 install.packages("devtools")
+# for Windows 64 bit, user must set the no multiarch option for the devtools package
+options(devtools.install.args = "--no-multiarch") # only in windows 64 bit
 devtools::install_github("junhewk/ktm")
 ```
 

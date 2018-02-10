@@ -20,6 +20,9 @@ output: github_document
 # 자세한 설명은 https://github.com/junhewk/ktm/blob/master/jre.rmd를 참고해주세요.
 # install.packages("rJava")
 install.packages("devtools")
+# 윈도우즈 64 bit에 설치하시는 경우, 아래 명령어를 추가하셔야 설치 가능합니다.
+# install_github의 경우 source에서 바로 설치하는데, 이때 rJava package가 32 bit, 64 bit를 동시에 지원하지 않습니다.
+options(devtools.install.args = "--no-multiarch") # Only in Windows 64 bit
 devtools::install_github("junhewk/ktm")
 ```
 
