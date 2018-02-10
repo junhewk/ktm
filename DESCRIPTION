@@ -9,7 +9,7 @@ Description: Text mining for Korean corpus and sentiment analysis based on `Seun
     `rJava`, `dplyr`, `KOSAC` lexicon and others.
 Depends: R (>= 3.3.1)
 Imports:
-    rJava (>= 0.9-8),
+    rJava (>= 0.9-9),
     dplyr (>= 0.7.0),
     tibble (>= 1.3.0),
     utils (>= 3.3.1),
